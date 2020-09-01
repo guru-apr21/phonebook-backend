@@ -1,0 +1,1 @@
+{"version":3,"sources":["index.css"],"names":[],"mappings":"AAAA,OACE,kBAAmB,CACnB,WAAY,CACZ,YAAa,CACb,qBAAsB,CACtB,kBACF","file":"main.f4b8d103.chunk.css","sourcesContent":[".error {\n  border-style: solid;\n  margin: 10px;\n  padding: 20px;\n  box-sizing: border-box;\n  border-radius: 10px;\n}\n"]}
