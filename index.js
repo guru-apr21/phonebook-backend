@@ -1,24 +1,7 @@
 const express = require("express");
 const app = express();
-
-
-let persons = [
-  {
-    id: 1,
-    name: "Hanusha",
-    number: "9984789321",
-  },
-  {
-    id: 2,
-    name: "Geetha",
-    number: "8974789321",
-  },
-  {
-    id: 3,
-    name: "Rajalakshmi",
-    number: "9486213192",
-  },
-];
+const Person = require("./models/Person");
+require("./config/db")();
 
 app.use(express.json());
 app.use(express.static("build"));
@@ -26,7 +9,9 @@ app.use(express.static("build"));
 if (process.env.NODE_ENV === "development") {
   const morgan = require("morgan");
   app.use(
-    morgan(":method :url :status :res[content-length] - :response-time ms :body")
+    morgan(
+      ":method :url :status :res[content-length] - :response-time ms :body"
+    )
   );
   morgan.token("body", (req, res) => JSON.stringify(req.body));
 }
@@ -35,49 +20,67 @@ app.get("/", (req, res) => {
   res.send("<h1>Hello World</h1>");
 });
 
-app.get("/info", (req, res) => {
-  res.send(`
-    <p>Phone book has info for ${persons.length} people</p>
-    <p>${new Date()}</p>
-    `);
+app.get("/info", async (req, res) => {
+  try {
+    const persons = await Person.find();
+    res.send(`
+      <p>Phone book has info for ${persons.length} people</p>
+      <p>${new Date()}</p>
+      `);
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).end();
+  }
 });
 
-app.get("/api/persons", (req, res) => {
-  res.json(persons);
+app.get("/api/persons", async (req, res) => {
+  try {
+    const persons = await Person.find();
+    res.json(persons);
+  } catch (err) {
+    res.status(404).end();
+    console.log(err.message);
+  }
 });
 
-app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((p) => p.id === id);
-  if (!person) return res.status(404).end();
-  res.json(person);
+app.get("/api/persons/:id", async (req, res) => {
+  try {
+    const person = await Person.findById(req.params.id);
+    res.json(person);
+  } catch (err) {
+    res.status(404).end();
+    console.log(err.message);
+  }
 });
 
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter((n) => n.id !== id);
-  res.status(204).end();
+app.delete("/api/persons/:id", async (req, res) => {
+  try {
+    await Person.findByIdAndRemove(req.params.id);
+    res.status(204).end();
+  } catch (err) {
+    console.log(err.message);
+  }
 });
 
-app.post("/api/persons", (req, res) => {
-  let person = req.body;
+app.post("/api/persons", async (req, res) => {
+  try {
+    let body = req.body;
 
-  if (!person.name && !person.number)
-    return res.status(400).json({ error: "Name or number is required" });
+    if (!body.name && !body.number)
+      return res.status(400).json({ error: "Name or number is required" });
 
-  person = persons.find(
-    (p) => p.name.toLowerCase() === person.name.toLowerCase()
-  );
+    const { name, number } = req.body;
+    let person = new Person({
+      name,
+      number,
+    });
 
-  if (person) return res.status(400).json({ error: "name must be unique" });
-  const { name, number } = req.body;
-
-  const id = persons[persons.length - 1].id + 1;
-
-  person = { name, number, id };
-
-  persons = [...persons, person];
-  res.json(person);
+    person = await person.save();
+    res.json(person);
+  } catch (err) {
+    console.log(err.message);
+    res.status(400).end();
+  }
 });
 
 const PORT = process.env.PORT || 3001;
