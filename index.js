@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const morgan = require("morgan");
+
 
 let persons = [
   {
@@ -23,9 +23,13 @@ let persons = [
 morgan.token("body", (req, res) => JSON.stringify(req.body));
 app.use(express.json());
 app.use(express.static("build"));
-app.use(
-  morgan(":method :url :status :res[content-length] - :response-time ms :body")
-);
+
+if (process.env.NODE_ENV === "development") {
+  const morgan = require("morgan");
+  app.use(
+    morgan(":method :url :status :res[content-length] - :response-time ms :body")
+  );
+}
 
 app.get("/", (req, res) => {
   res.send("<h1>Hello World</h1>");
