@@ -20,7 +20,6 @@ let persons = [
   },
 ];
 
-morgan.token("body", (req, res) => JSON.stringify(req.body));
 app.use(express.json());
 app.use(express.static("build"));
 
@@ -29,6 +28,7 @@ if (process.env.NODE_ENV === "development") {
   app.use(
     morgan(":method :url :status :res[content-length] - :response-time ms :body")
   );
+  morgan.token("body", (req, res) => JSON.stringify(req.body));
 }
 
 app.get("/", (req, res) => {
